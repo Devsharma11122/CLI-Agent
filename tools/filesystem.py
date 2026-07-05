@@ -212,3 +212,68 @@ class ReadFileTool(BaseTool):
                 success=False,
                 message=str(ex)
             )
+        
+
+class ListDirectoryInput(BaseModel):
+
+    path: str = Field(
+        default="",
+        description="Directory inside workspace to inspect."
+    )
+
+class ListDirectoryTool(BaseTool):
+
+    def get_definition(self):
+
+        return Tool(
+            name="list_directory",
+            description="Lists all files and folders inside a directory.",
+            input_model=ListDirectoryInput,
+            function=self.execute
+        )
+
+    def execute(self, path: str = ""):
+
+        try:
+
+            directory = WORKSPACE / path
+
+            if not directory.exists():
+
+                return ToolResult(
+                    success=False,
+                    message="Directory does not exist."
+                )
+
+            if not directory.is_dir():
+
+                return ToolResult(
+                    success=False,
+                    message="Path is not a directory."
+                )
+
+            items = []
+
+            for item in directory.iterdir():
+
+                items.append(
+                    {
+                        "name": item.name,
+                        "type": "folder" if item.is_dir() else "file"
+                    }
+                )
+
+            return ToolResult(
+                success=True,
+                message="Directory listed successfully.",
+                data={
+                    "items": items
+                }
+            )
+
+        except Exception as ex:
+
+            return ToolResult(
+                success=False,
+                message=str(ex)
+            )

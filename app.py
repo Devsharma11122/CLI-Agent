@@ -7,7 +7,8 @@ from tools.filesystem import (
     CreateFolderTool,
     CreateFileTool,
     WriteFileTool,
-    ReadFileTool
+    ReadFileTool,
+    ListDirectoryTool
 )
 
 
@@ -17,6 +18,7 @@ registry.register(CreateFolderTool())
 registry.register(CreateFileTool())
 registry.register(WriteFileTool())
 registry.register(ReadFileTool())
+registry.register(ListDirectoryTool())
 
 executor = ToolExecutor(registry)
 
