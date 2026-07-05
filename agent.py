@@ -1,86 +1,97 @@
 import json
 
 from config import client, MODEL
+from core.executor import ToolExecutor
+from core.registry import ToolRegistry
 
 
 class Agent:
 
-    def __init__(self, registry):
+    def __init__(
+        self,
+        registry: ToolRegistry,
+        executor: ToolExecutor
+    ):
 
         self.registry = registry
+        self.executor = executor
 
-    def chat(self, user_message: str):
-
-        messages = [
+        self.messages = [
             {
                 "role": "system",
                 "content": (
-                    "You are an AI Coding Assistant. "
-                    "Use tools whenever needed."
+                    "You are a helpful AI Coding Agent.\n"
+                    "Whenever a tool is useful, use it.\n"
+                    "Never pretend to create files.\n"
+                    "Always use available tools."
                 )
-            },
-            {
-                "role": "user",
-                "content": user_message
             }
         ]
 
+    def run(self):
+
         while True:
 
-            response = client.chat.completions.create(
+            user_input = input("\nYou > ")
 
-                model=MODEL,
+            if user_input.lower() == "exit":
+                break
 
-                messages=messages,
-
-                tools=self.registry.get_openai_tools()
-
+            self.messages.append(
+                {
+                    "role": "user",
+                    "content": user_input
+                }
             )
 
-            assistant_message = response.choices[0].message
+            while True:
 
-            messages.append(assistant_message)
+                response = client.chat.completions.create(
 
-            # ---------------------------------------------------
-            # Did the model ask for a tool?
-            # ---------------------------------------------------
+                    model=MODEL,
 
-            if assistant_message.tool_calls:
+                    messages=self.messages,
 
-                for tool_call in assistant_message.tool_calls:
+                    tools=self.registry.get_openai_tools()
+                )
 
-                    tool_name = tool_call.function.name
+                assistant = response.choices[0].message
 
-                    arguments = json.loads(
-                        tool_call.function.arguments
-                    )
+                self.messages.append(assistant)
 
-                    print(f"\n🔧 Tool Selected : {tool_name}")
-                    print(f"📥 Arguments     : {arguments}")
+                if assistant.tool_calls:
 
-                    tool_result = self.registry.execute(
-                        tool_name,
-                        **arguments
-                    )
+                    for tool_call in assistant.tool_calls:
 
-                    print(f"📤 Tool Result   : {tool_result}")
+                        tool_name = tool_call.function.name
 
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": json.dumps(tool_result)
-                        }
-                    )
+                        arguments = json.loads(
+                            tool_call.function.arguments
+                        )
 
-                continue
+                        print(
+                            f"\n🔧 Tool: {tool_name}"
+                        )
 
-            # ---------------------------------------------------
-            # No tool call
-            # Final answer
-            # ---------------------------------------------------
+                        print(arguments)
 
-            print("\n🤖 Assistant\n")
-            print(assistant_message.content)
+                        result = self.executor.execute(
+                            tool_name,
+                            arguments
+                        )
 
-            break
+                        self.messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": result.model_dump_json()
+                            }
+                        )
+
+                    continue
+
+                print("\nAssistant:\n")
+
+                print(assistant.content)
+
+                break

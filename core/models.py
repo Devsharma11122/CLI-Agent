@@ -6,9 +6,6 @@ from pydantic import BaseModel
 
 @dataclass
 class Tool:
-    """
-    Metadata about a tool.
-    """
 
     name: str
 
@@ -19,11 +16,7 @@ class Tool:
     function: Callable
 
 
-@dataclass
-class ToolResult:
-    """
-    Standard response returned by every tool.
-    """
+class ToolResult(BaseModel):
 
     success: bool
 
