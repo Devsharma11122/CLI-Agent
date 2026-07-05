@@ -1,28 +1,29 @@
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from config import WORKSPACE
-from models import Tool
-from tools.base import BaseTool
+from core.base_tool import BaseTool
+from core.models import Tool, ToolResult
+
+
+WORKSPACE = Path("workspace")
 
 
 class CreateFolderInput(BaseModel):
-    path: str
+    path: str = Field(
+        ...,
+        description="Folder name or relative path to create inside workspace."
+    )
 
 
 class CreateFolderTool(BaseTool):
 
-    def get_definition(self):
+    def get_definition(self) -> Tool:
 
         return Tool(
-
             name="create_folder",
-
-            description="Creates a folder inside workspace.",
-
+            description="Creates a folder inside the workspace.",
             input_model=CreateFolderInput,
-
             function=self.execute
         )
 
@@ -30,15 +31,21 @@ class CreateFolderTool(BaseTool):
 
         folder = WORKSPACE / path
 
-        folder.mkdir(
-            parents=True,
-            exist_ok=True
-        )
+        try:
 
-        return {
+            folder.mkdir(parents=True, exist_ok=True)
 
-            "success": True,
+            return ToolResult(
+                success=True,
+                message=f"Folder '{path}' created successfully.",
+                data={
+                    "path": str(folder)
+                }
+            )
 
-            "folder": str(folder)
+        except Exception as ex:
 
-        }
+            return ToolResult(
+                success=False,
+                message=str(ex)
+            )

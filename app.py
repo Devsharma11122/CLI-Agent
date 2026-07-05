@@ -1,18 +1,20 @@
-from registry import ToolRegistry
+from core.executor import ToolExecutor
+from core.registry import ToolRegistry
+
 from tools.filesystem import CreateFolderTool
-from agent import Agent
 
 
 registry = ToolRegistry()
 
-registry.register(
-    CreateFolderTool()
+registry.register(CreateFolderTool())
+
+executor = ToolExecutor(registry)
+
+result = executor.execute(
+    "create_folder",
+    {
+        "path": "TodoApp"
+    }
 )
 
-agent = Agent(registry)
-
-while True:
-
-    query = input("\nYou > ")
-
-    agent.chat(query)
+print(result)
