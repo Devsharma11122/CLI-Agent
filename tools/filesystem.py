@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 
 from core.base_tool import BaseTool
 from core.models import Tool, ToolResult
+from core.path_utils import safe_path
+
 
 
 WORKSPACE = Path("workspace")
@@ -35,7 +37,7 @@ class CreateFolderTool(BaseTool):
 
         try:
 
-            folder = WORKSPACE / path
+            folder = safe_path(path)
 
             folder.mkdir(parents=True, exist_ok=True)
 
@@ -82,7 +84,7 @@ class CreateFileTool(BaseTool):
 
         try:
 
-            file = WORKSPACE / path
+            file = safe_path(path)
 
             file.parent.mkdir(
                 parents=True,
@@ -133,7 +135,7 @@ class WriteFileTool(BaseTool):
 
         try:
 
-            file = WORKSPACE / path
+            file = safe_path(path)
 
             file.parent.mkdir(
                 parents=True,
@@ -185,7 +187,7 @@ class ReadFileTool(BaseTool):
 
         try:
 
-            file = WORKSPACE / path
+            file = safe_path(path)
 
             if not file.exists():
 
@@ -236,7 +238,7 @@ class ListDirectoryTool(BaseTool):
 
         try:
 
-            directory = WORKSPACE / path
+            directory = safe_path(path)
 
             if not directory.exists():
 
